@@ -31,14 +31,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>Gopher_Sense</name>
-			<type>2</type>
-			<location>C:/Users/jonol/FSAE/Gopher_Sense</location>
-		</link>
-		<link>
 			<name>gophercan-lib</name>
 			<type>2</type>
-			<location>C:/Users/jonol/FSAE/gophercan-lib</location>
+			<location>C:/Users/jonathan/FSAE/gophercan-lib</location>
 		</link>
 	</linkedResources>
 </projectDescription>
