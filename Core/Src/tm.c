@@ -5,10 +5,12 @@
  *      Author: jonol
  */
 
+#include "tm.h"
 #include "stm32f4xx_hal.h"
 #include "main.h"
 #include "cmsis_os.h"
 #include "GopherCAN.h"
+#include <stdbool.h>
 
 extern CAN_HandleTypeDef hcan1;
 
@@ -33,7 +35,13 @@ void tm_task() {
     HAL_GPIO_TogglePin(RFD_GPIO3_GPIO_Port, RFD_GPIO3_Pin);
     HAL_GPIO_TogglePin(RFD_GPIO4_GPIO_Port, RFD_GPIO4_Pin);
     HAL_GPIO_TogglePin(RFD_GPIO5_GPIO_Port, RFD_GPIO5_Pin);
-    GPIO_PinState sd_card_detect = HAL_GPIO_ReadPin(SDIO_CD_GPIO_Port, SDIO_CD_Pin);
+    bool sd_card_detect = HAL_GPIO_ReadPin(SDIO_CD_GPIO_Port, SDIO_CD_Pin);
+    printf("SD_CD: %d\n", sd_card_detect);
 
     osDelay(1000);
+}
+
+void tm_fault_handler() {
+    HAL_GPIO_WritePin(LED_HEARTBEAT_GPIO_Port, LED_HEARTBEAT_Pin, GPIO_PIN_RESET);
+    NVIC_SystemReset();
 }
