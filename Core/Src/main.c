@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,10 +46,16 @@ ADC_HandleTypeDef hadc1;
 
 CAN_HandleTypeDef hcan1;
 
+SD_HandleTypeDef hsd;
+DMA_HandleTypeDef hdma_sdio_rx;
+DMA_HandleTypeDef hdma_sdio_tx;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId defaultTaskHandle;
+osThreadId TaskAHandle;
+osThreadId ServiceCANHandle;
+osThreadId TaskBHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -56,11 +63,15 @@ osThreadId defaultTaskHandle;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
-void StartDefaultTask(void const * argument);
+static void MX_SDIO_SD_Init(void);
+void StartTaskA(void const * argument);
+void tm_task_service_can(void const * argument);
+void StartTaskB(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -103,10 +114,13 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_CAN1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_SDIO_SD_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   tm_init();
   /* USER CODE END 2 */
@@ -128,9 +142,17 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* definition and creation of TaskA */
+  osThreadDef(TaskA, StartTaskA, osPriorityNormal, 0, 512);
+  TaskAHandle = osThreadCreate(osThread(TaskA), NULL);
+
+  /* definition and creation of ServiceCAN */
+  osThreadDef(ServiceCAN, tm_task_service_can, osPriorityNormal, 0, 512);
+  ServiceCANHandle = osThreadCreate(osThread(ServiceCAN), NULL);
+
+  /* definition and creation of TaskB */
+  osThreadDef(TaskB, StartTaskB, osPriorityNormal, 0, 512);
+  TaskBHandle = osThreadCreate(osThread(TaskB), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -295,6 +317,34 @@ static void MX_CAN1_Init(void)
 }
 
 /**
+  * @brief SDIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SDIO_SD_Init(void)
+{
+
+  /* USER CODE BEGIN SDIO_Init 0 */
+
+  /* USER CODE END SDIO_Init 0 */
+
+  /* USER CODE BEGIN SDIO_Init 1 */
+
+  /* USER CODE END SDIO_Init 1 */
+  hsd.Instance = SDIO;
+  hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
+  hsd.Init.ClockBypass = SDIO_CLOCK_BYPASS_DISABLE;
+  hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
+  hsd.Init.BusWide = SDIO_BUS_WIDE_4B;
+  hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
+  hsd.Init.ClockDiv = 0;
+  /* USER CODE BEGIN SDIO_Init 2 */
+
+  /* USER CODE END SDIO_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -361,6 +411,25 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+  /* DMA2_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -422,24 +491,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF0_RTC_50Hz;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC8 PC9 PC10 PC11
-                           PC12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                          |GPIO_PIN_12;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PD2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -448,22 +499,58 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_StartTaskA */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the TaskA thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+/* USER CODE END Header_StartTaskA */
+void StartTaskA(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
   {
-    tm_task();
+    tm_taskA();
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_tm_task_service_can */
+/**
+* @brief Function implementing the ServiceCAN thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_tm_task_service_can */
+void tm_task_service_can(void const * argument)
+{
+  /* USER CODE BEGIN tm_task_service_can */
+  /* Infinite loop */
+  for(;;)
+  {
+    tm_service_can();
+  }
+  /* USER CODE END tm_task_service_can */
+}
+
+/* USER CODE BEGIN Header_StartTaskB */
+/**
+* @brief Function implementing the TaskB thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTaskB */
+void StartTaskB(void const * argument)
+{
+  /* USER CODE BEGIN StartTaskB */
+  /* Infinite loop */
+  for(;;)
+  {
+    tm_taskB();
+  }
+  /* USER CODE END StartTaskB */
 }
 
 /**

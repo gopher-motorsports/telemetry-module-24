@@ -8,8 +8,15 @@
 #ifndef INC_TM_H_
 #define INC_TM_H_
 
+typedef enum {
+    TM_OK     = 0,
+    TM_ERR    = 1
+} TM_RES;
+
 void tm_init();
-void tm_task();
+void tm_taskA();
+void tm_taskB();
 void tm_fault_handler();
+void tm_service_can();
 
 #endif /* INC_TM_H_ */
