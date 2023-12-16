@@ -14,7 +14,8 @@ TM_RES tm_sd_init() {
     if (f_mount(&SDFatFS, SDPath, 1) != FR_OK)
         return TM_ERR;
 
-    if (f_open(&SDFile, "data.gdat", FA_OPEN_APPEND | FA_WRITE) != FR_OK)
+    char* filename = "data.gdat";
+    if (f_open(&SDFile, filename, FA_OPEN_APPEND | FA_WRITE) != FR_OK)
         return TM_ERR;
 
     if (f_printf(&SDFile, "/%s:\n", filename) <= 0)
