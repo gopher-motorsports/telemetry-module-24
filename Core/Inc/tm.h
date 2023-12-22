@@ -16,7 +16,7 @@ typedef enum {
 void tm_init();
 void tm_taskA();
 void tm_taskB();
-void tm_fault_handler();
 void tm_service_can();
+void tm_fault();
 
 #endif /* INC_TM_H_ */
