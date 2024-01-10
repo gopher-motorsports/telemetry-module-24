@@ -5,10 +5,17 @@
  *      Author: jonol
  */
 
+#include <stdbool.h>
+#include "tm_sd.h"
 #include "tm.h"
+#include "main.h"
 #include "fatfs.h"
 
 TM_RES tm_sd_init() {
+    bool sd_card_detect = HAL_GPIO_ReadPin(SDIO_CD_GPIO_Port, SDIO_CD_Pin);
+    if (sd_card_detect) // no SD detected
+        return TM_ERR;
+
     printf("initializing SD card...\n");
 
     if (f_mount(&SDFatFS, SDPath, 1) != FR_OK)

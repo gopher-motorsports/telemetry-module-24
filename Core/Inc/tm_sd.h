@@ -8,6 +8,7 @@
 #ifndef INC_TM_SD_H_
 #define INC_TM_SD_H_
 
+#include <stdint.h>
 #include "tm.h"
 
 TM_RES tm_sd_init();
