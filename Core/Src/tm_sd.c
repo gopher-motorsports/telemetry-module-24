@@ -43,11 +43,6 @@ TM_RES tm_sd_init() {
 }
 
 void tm_sd_deinit() {
-	bool sd_detected = HAL_GPIO_ReadPin(SDIO_CD_GPIO_Port, SDIO_CD_Pin) == GPIO_PIN_RESET;
-	if (!sd_detected) return;
-
-    printf("deinitializing SD card...\n");
-
     f_close(&SDFile);
     f_mount(NULL, SDPath, 0);
 }

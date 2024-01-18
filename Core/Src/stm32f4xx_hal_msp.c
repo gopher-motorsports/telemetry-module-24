@@ -270,9 +270,6 @@ void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc)
     GPIO_InitStruct.Alternate = GPIO_AF0_RTC_50Hz;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    /* RTC interrupt Init */
-    HAL_NVIC_SetPriority(RTC_Alarm_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
   /* USER CODE BEGIN RTC_MspInit 1 */
 
   /* USER CODE END RTC_MspInit 1 */
@@ -301,8 +298,6 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* hrtc)
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_15);
 
-    /* RTC interrupt DeInit */
-    HAL_NVIC_DisableIRQ(RTC_Alarm_IRQn);
   /* USER CODE BEGIN RTC_MspDeInit 1 */
 
   /* USER CODE END RTC_MspDeInit 1 */
