@@ -53,37 +53,27 @@ void tm_taskA() {
 //    HAL_GPIO_WritePin(RFD_GPIO3_GPIO_Port, RFD_GPIO3_Pin, GPIO_PIN_SET);
 //    HAL_GPIO_TogglePin(RFD_GPIO4_GPIO_Port, RFD_GPIO4_Pin);
 //    HAL_GPIO_TogglePin(RFD_GPIO5_GPIO_Port, RFD_GPIO5_Pin);
-    packetsLogged_ul.data += 1;
-    send_parameter((CAN_INFO_STRUCT*)&packetsLogged_ul);
+//    packetsLogged_ul.data += 1;
+//    send_parameter((CAN_INFO_STRUCT*)&packetsLogged_ul);
 
     osDelay(1000);
 }
 
 void tm_taskB() {
-//    printf("task B\n");
+    static bool sd_ready = 0;
+    if (!sd_ready) {
+        if (tm_sd_init() != TM_OK)
+            tm_sd_deinit();
+        else
+            sd_ready = 1;
+    }
 
-    // initial calendar time set in .ioc
-    RTC_TimeTypeDef time;
-    RTC_DateTypeDef date;
-    HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
-    HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
-    printf("time: %04u-%02u-%02u-%02u-%02u-%02u\n", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
-
-//    static bool sd_ready = 0;
-//    if (!sd_ready) {
-//        if (tm_sd_init() != TM_OK)
-//            tm_sd_deinit();
-//        else
-//            sd_ready = 1;
-//    }
-
-//    if (sd_ready) {
-//        if (plm_sd_write("test", 4) != PLM_OK) {
-//            // write failed
-//            sd_ready = 0;
-//            plm_sd_deinit();
-//        }
-//    }
+    if (sd_ready) {
+        if (tm_sd_write((uint8_t*)"test", 4) != TM_OK) {
+            sd_ready = 0;
+            tm_sd_deinit();
+        }
+    }
 
 //    HAL_UART_Transmit(&huart1, "hello", 5, HAL_MAX_DELAY);
 
