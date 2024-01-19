@@ -13,8 +13,6 @@
 #include "tm_sd.h"
 #include "GopherCAN.h"
 #include "GopherCAN_network.h"
-//#include "gopher_sense.h"
-#include "bsp_driver_sd.h"
 
 extern UART_HandleTypeDef huart1;
 extern CAN_HandleTypeDef hcan1;
@@ -24,39 +22,25 @@ extern RTC_HandleTypeDef hrtc;
 void tm_init() {
 	printf("Go4-24 Telemetry Module\n");
 
-//	hcan1.Init.Mode = CAN_MODE_LOOPBACK;
-//	if (HAL_CAN_Init(&hcan1))
-//	    tm_fault();
+#ifdef TM_DEBUG
+	hcan1.Init.Mode = CAN_MODE_LOOPBACK;
+	if (HAL_CAN_Init(&hcan1))
+	    tm_fault();
+#endif
 
 	if (init_can(GCAN0, &hcan1, 1, BXTYPE_MASTER))
 		tm_fault();
-
-//	if (gsense_init(&hcan1, &hadc1, NULL, NULL, LED_GSENSE_GPIO_Port, LED_GSENSE_Pin))
-//	    tm_fault();
 
 	printf("initialization complete\n");
 }
 
 void tm_taskA() {
     HAL_GPIO_TogglePin(LED_HEARTBEAT_GPIO_Port, LED_HEARTBEAT_Pin);
-
-//    HAL_GPIO_TogglePin(LED_FAULT_GPIO_Port, LED_FAULT_Pin);
-//    HAL_GPIO_TogglePin(LED_GSENSE_GPIO_Port, LED_GSENSE_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO0_GPIO_Port, RFD_GPIO0_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO1_GPIO_Port, RFD_GPIO1_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO2_GPIO_Port, RFD_GPIO2_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO3_GPIO_Port, RFD_GPIO3_Pin);
-//    HAL_GPIO_WritePin(RFD_GPIO3_GPIO_Port, RFD_GPIO3_Pin, GPIO_PIN_SET);
-//    HAL_GPIO_TogglePin(RFD_GPIO4_GPIO_Port, RFD_GPIO4_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO5_GPIO_Port, RFD_GPIO5_Pin);
-//    packetsLogged_ul.data += 1;
-//    send_parameter((CAN_INFO_STRUCT*)&packetsLogged_ul);
-
     osDelay(1000);
 }
 
 void tm_taskB() {
-	HAL_GPIO_TogglePin(LED_GSENSE_GPIO_Port, LED_GSENSE_Pin);
+	HAL_GPIO_TogglePin(LED_STATUS_GPIO_Port, LED_STATUS_Pin);
 
     static bool sd_ready = 0;
     if (!sd_ready) {
@@ -73,8 +57,17 @@ void tm_taskB() {
         }
     }
 
+//    HAL_GPIO_TogglePin(LED_FAULT_GPIO_Port, LED_FAULT_Pin);
+//    HAL_GPIO_TogglePin(RFD_GPIO0_GPIO_Port, RFD_GPIO0_Pin);
+//    HAL_GPIO_TogglePin(RFD_GPIO1_GPIO_Port, RFD_GPIO1_Pin);
+//    HAL_GPIO_TogglePin(RFD_GPIO2_GPIO_Port, RFD_GPIO2_Pin);
+//    HAL_GPIO_TogglePin(RFD_GPIO3_GPIO_Port, RFD_GPIO3_Pin);
+//    HAL_GPIO_TogglePin(RFD_GPIO4_GPIO_Port, RFD_GPIO4_Pin);
+//    HAL_GPIO_TogglePin(RFD_GPIO5_GPIO_Port, RFD_GPIO5_Pin);
+
 //    HAL_UART_Transmit(&huart1, "hello", 5, HAL_MAX_DELAY);
 
+//    packetsLogged_ul.data += 1;
 //    send_parameter((CAN_INFO_STRUCT*)&packetsLogged_ul);
 
 //    HAL_ADC_Start(&hadc1);
@@ -82,6 +75,12 @@ void tm_taskB() {
 //    uint32_t raw = HAL_ADC_GetValue(&hadc1);
 //    printf("ADC: %ld\n", raw);
 //    HAL_ADC_Stop(&hadc1);
+
+	RTC_TimeTypeDef time;
+    RTC_DateTypeDef date;
+	HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
+	printf("20%u-%02u-%02u-%02u-%02u-%02u\n", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
 
     osDelay(5000);
 }
@@ -92,15 +91,15 @@ void tm_service_can() {
     osDelay(1);
 }
 
+void GCAN_RxMsgPendingCallback(CAN_HandleTypeDef* hcan, U32 rx_mailbox) {
+    service_can_rx_hardware(hcan, rx_mailbox);
+}
+
 void tm_fault() {
     HAL_GPIO_WritePin(LED_HEARTBEAT_GPIO_Port, LED_HEARTBEAT_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_FAULT_GPIO_Port, LED_FAULT_Pin, GPIO_PIN_SET);
-    HAL_Delay(1000);
+    HAL_Delay(5000);
     HAL_GPIO_WritePin(LED_FAULT_GPIO_Port, LED_FAULT_Pin, GPIO_PIN_RESET);
     HAL_Delay(1000);
     NVIC_SystemReset();
-}
-
-void GCAN_RxMsgPendingCallback(CAN_HandleTypeDef* hcan, U32 rx_mailbox) {
-    service_can_rx_hardware(hcan, rx_mailbox);
 }

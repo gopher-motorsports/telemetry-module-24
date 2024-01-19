@@ -23,13 +23,14 @@ TM_RES tm_sd_init() {
 	if (f_mount(&SDFatFS, SDPath, 1) != FR_OK)
 		return TM_ERR;
 
-	RTC_DateTypeDef date;
+	// must call GetTime() before GetDate() according to HAL docs
 	RTC_TimeTypeDef time;
-	HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
+	RTC_DateTypeDef date;
 	HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
 
 	char filename[] = "YYYY-MM-DD-hh-mm-ss.gdat";
-	sprintf(filename, "%04u-%02u-%02u-%02u-%02u-%02u.gdat", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
+	sprintf(filename, "20%u-%02u-%02u-%02u-%02u-%02u.gdat", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
 
     if (f_open(&SDFile, filename, FA_OPEN_APPEND | FA_WRITE) != FR_OK)
         return TM_ERR;

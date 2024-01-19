@@ -59,14 +59,14 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SDIO_CD_Pin GPIO_PIN_13
 #define SDIO_CD_GPIO_Port GPIOC
-#define VRTC_Pin GPIO_PIN_1
-#define VRTC_GPIO_Port GPIOA
+#define VBAT_Pin GPIO_PIN_1
+#define VBAT_GPIO_Port GPIOA
 #define LED_HEARTBEAT_Pin GPIO_PIN_5
 #define LED_HEARTBEAT_GPIO_Port GPIOA
 #define LED_FAULT_Pin GPIO_PIN_6
 #define LED_FAULT_GPIO_Port GPIOA
-#define LED_GSENSE_Pin GPIO_PIN_7
-#define LED_GSENSE_GPIO_Port GPIOA
+#define LED_STATUS_Pin GPIO_PIN_7
+#define LED_STATUS_GPIO_Port GPIOA
 #define RFD_GPIO5_Pin GPIO_PIN_4
 #define RFD_GPIO5_GPIO_Port GPIOC
 #define RFD_GPIO4_Pin GPIO_PIN_5

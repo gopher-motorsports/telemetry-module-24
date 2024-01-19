@@ -8,6 +8,9 @@
 #ifndef INC_TM_H_
 #define INC_TM_H_
 
+#define TM_RTC_MAGIC 0x24
+#define TM_DEBUG
+
 typedef enum {
     TM_OK     = 0,
     TM_ERR    = 1
