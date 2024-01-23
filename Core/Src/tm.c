@@ -36,6 +36,7 @@ void tm_init() {
 
 void tm_taskA() {
     HAL_GPIO_TogglePin(LED_HEARTBEAT_GPIO_Port, LED_HEARTBEAT_Pin);
+    HAL_UART_Transmit(&huart1, (uint8_t*)"demo", 4, HAL_MAX_DELAY);
     osDelay(1000);
 }
 
@@ -65,7 +66,7 @@ void tm_taskB() {
 //    HAL_GPIO_TogglePin(RFD_GPIO4_GPIO_Port, RFD_GPIO4_Pin);
 //    HAL_GPIO_TogglePin(RFD_GPIO5_GPIO_Port, RFD_GPIO5_Pin);
 
-//    HAL_UART_Transmit(&huart1, "hello", 5, HAL_MAX_DELAY);
+//    HAL_UART_Transmit(&huart1, (uint8_t*)"demo", 4, HAL_MAX_DELAY);
 
 //    packetsLogged_ul.data += 1;
 //    send_parameter((CAN_INFO_STRUCT*)&packetsLogged_ul);
