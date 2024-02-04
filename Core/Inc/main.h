@@ -57,10 +57,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define SDIO_CD_Pin GPIO_PIN_13
-#define SDIO_CD_GPIO_Port GPIOC
-#define VBAT_Pin GPIO_PIN_1
-#define VBAT_GPIO_Port GPIOA
 #define LED_HEARTBEAT_Pin GPIO_PIN_5
 #define LED_HEARTBEAT_GPIO_Port GPIOA
 #define LED_FAULT_Pin GPIO_PIN_6
@@ -79,6 +75,8 @@ void Error_Handler(void);
 #define RFD_GPIO1_GPIO_Port GPIOB
 #define RFD_GPIO0_Pin GPIO_PIN_10
 #define RFD_GPIO0_GPIO_Port GPIOB
+#define SDIO_CD_Pin GPIO_PIN_15
+#define SDIO_CD_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
