@@ -28,7 +28,7 @@ void tm_init() {
 	    tm_fault();
 #endif
 
-	if (init_can(GCAN0, &hcan1, 1, BXTYPE_MASTER))
+	if (init_can(&hcan1, GCAN0))
 		tm_fault();
 
 	printf("initialization complete\n");
@@ -90,10 +90,6 @@ void tm_service_can() {
     service_can_tx(&hcan1);
     service_can_rx_buffer();
     osDelay(1);
-}
-
-void GCAN_RxMsgPendingCallback(CAN_HandleTypeDef* hcan, U32 rx_mailbox) {
-    service_can_rx_hardware(hcan, rx_mailbox);
 }
 
 void tm_fault() {
