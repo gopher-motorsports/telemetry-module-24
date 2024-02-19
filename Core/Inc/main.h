@@ -57,6 +57,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define ADC_VBAT_Pin GPIO_PIN_0
+#define ADC_VBAT_GPIO_Port GPIOC
 #define LED_HEARTBEAT_Pin GPIO_PIN_5
 #define LED_HEARTBEAT_GPIO_Port GPIOA
 #define LED_FAULT_Pin GPIO_PIN_6
