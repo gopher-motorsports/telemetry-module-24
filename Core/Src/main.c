@@ -57,9 +57,11 @@ DMA_HandleTypeDef hdma_sdio_tx;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-osThreadId TaskAHandle;
+osThreadId CollectDataHandle;
 osThreadId ServiceCANHandle;
-osThreadId TaskBHandle;
+osThreadId StoreDataHandle;
+osThreadId TransmitDataHandle;
+osThreadId HeartbeatHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -75,9 +77,11 @@ static void MX_USART2_UART_Init(void);
 static void MX_SDIO_SD_Init(void);
 static void MX_RTC_Init(void);
 static void MX_CAN2_Init(void);
-void StartTaskA(void const * argument);
+void tm_task_collect_data(void const * argument);
 void tm_task_service_can(void const * argument);
-void StartTaskB(void const * argument);
+void tm_task_store_data(void const * argument);
+void tm_task_transmit_data(void const * argument);
+void tm_task_heartbeat(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -150,17 +154,25 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of TaskA */
-  osThreadDef(TaskA, StartTaskA, osPriorityNormal, 0, 512);
-  TaskAHandle = osThreadCreate(osThread(TaskA), NULL);
+  /* definition and creation of CollectData */
+  osThreadDef(CollectData, tm_task_collect_data, osPriorityNormal, 0, 512);
+  CollectDataHandle = osThreadCreate(osThread(CollectData), NULL);
 
   /* definition and creation of ServiceCAN */
   osThreadDef(ServiceCAN, tm_task_service_can, osPriorityNormal, 0, 512);
   ServiceCANHandle = osThreadCreate(osThread(ServiceCAN), NULL);
 
-  /* definition and creation of TaskB */
-  osThreadDef(TaskB, StartTaskB, osPriorityNormal, 0, 512);
-  TaskBHandle = osThreadCreate(osThread(TaskB), NULL);
+  /* definition and creation of StoreData */
+  osThreadDef(StoreData, tm_task_store_data, osPriorityNormal, 0, 512);
+  StoreDataHandle = osThreadCreate(osThread(StoreData), NULL);
+
+  /* definition and creation of TransmitData */
+  osThreadDef(TransmitData, tm_task_transmit_data, osPriorityNormal, 0, 512);
+  TransmitDataHandle = osThreadCreate(osThread(TransmitData), NULL);
+
+  /* definition and creation of Heartbeat */
+  osThreadDef(Heartbeat, tm_task_heartbeat, osPriorityNormal, 0, 512);
+  HeartbeatHandle = osThreadCreate(osThread(Heartbeat), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -602,20 +614,20 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartTaskA */
+/* USER CODE BEGIN Header_tm_task_collect_data */
 /**
-  * @brief  Function implementing the TaskA thread.
+  * @brief  Function implementing the CollectData thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartTaskA */
-void StartTaskA(void const * argument)
+/* USER CODE END Header_tm_task_collect_data */
+void tm_task_collect_data(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
   {
-    tm_taskA();
+    tm_collect_data();
   }
   /* USER CODE END 5 */
 }
@@ -638,22 +650,58 @@ void tm_task_service_can(void const * argument)
   /* USER CODE END tm_task_service_can */
 }
 
-/* USER CODE BEGIN Header_StartTaskB */
+/* USER CODE BEGIN Header_tm_task_store_data */
 /**
-* @brief Function implementing the TaskB thread.
+* @brief Function implementing the StoreData thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTaskB */
-void StartTaskB(void const * argument)
+/* USER CODE END Header_tm_task_store_data */
+void tm_task_store_data(void const * argument)
 {
-  /* USER CODE BEGIN StartTaskB */
+  /* USER CODE BEGIN tm_task_store_data */
   /* Infinite loop */
   for(;;)
   {
-    tm_taskB();
+    tm_store_data();
   }
-  /* USER CODE END StartTaskB */
+  /* USER CODE END tm_task_store_data */
+}
+
+/* USER CODE BEGIN Header_tm_task_transmit_data */
+/**
+* @brief Function implementing the TransmitData thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_tm_task_transmit_data */
+void tm_task_transmit_data(void const * argument)
+{
+  /* USER CODE BEGIN tm_task_transmit_data */
+  /* Infinite loop */
+  for(;;)
+  {
+    tm_transmit_data();
+  }
+  /* USER CODE END tm_task_transmit_data */
+}
+
+/* USER CODE BEGIN Header_tm_task_heartbeat */
+/**
+* @brief Function implementing the Heartbeat thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_tm_task_heartbeat */
+void tm_task_heartbeat(void const * argument)
+{
+  /* USER CODE BEGIN tm_task_heartbeat */
+  /* Infinite loop */
+  for(;;)
+  {
+    tm_heartbeat();
+  }
+  /* USER CODE END tm_task_heartbeat */
 }
 
 /**
