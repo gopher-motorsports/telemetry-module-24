@@ -64,33 +64,46 @@ void tm_service_can() {
 }
 
 void tm_collect_data() {
+//	HAL_ADC_Start(&hadc1);
+//	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+//	uint32_t raw = HAL_ADC_GetValue(&hadc1);
+//	printf("ADC: %ld\n", raw);
+//	HAL_ADC_Stop(&hadc1);
+
 	osDelay(TM_DELAY_COLLECT_DATA);
 }
 
 void tm_store_data() {
-	static bool sd_ready = 0;
-	if (!sd_ready) {
-		if (tm_sd_init() != TM_OK)
-			tm_sd_deinit();
-		else
-			sd_ready = 1;
-	}
-
-	if (sd_ready) {
-		if (tm_sd_write((uint8_t*)"test", 4) != TM_OK) {
-			sd_ready = 0;
-			tm_sd_deinit();
-		}
-	}
+//	static bool sd_ready = 0;
+//	if (!sd_ready) {
+//		if (tm_sd_init() != TM_OK)
+//			tm_sd_deinit();
+//		else
+//			sd_ready = 1;
+//	}
+//
+//	if (sd_ready) {
+//		if (tm_sd_write((uint8_t*)"test", 4) != TM_OK) {
+//			sd_ready = 0;
+//			tm_sd_deinit();
+//		}
+//	}
 
 	osDelay(TM_DELAY_STORE_DATA);
 }
 
 void tm_transmit_data() {
+	HAL_UART_Transmit(&huart1, (uint8_t*)"test", 4, HAL_MAX_DELAY);
+
+//	packetsLogged_ul.data += 1;
+//	send_parameter(PACKETSLOGGED_UL_ID);
+
 	osDelay(TM_DELAY_TRANSMIT_DATA);
 }
 
 void tm_fault() {
+	vTaskSuspendAll();
+	printf("! FAULT !\n");
     HAL_GPIO_WritePin(LED_HEARTBEAT_GPIO_Port, LED_HEARTBEAT_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LED_FAULT_GPIO_Port, LED_FAULT_Pin, GPIO_PIN_SET);
     HAL_Delay(5000);
@@ -98,23 +111,3 @@ void tm_fault() {
     HAL_Delay(1000);
     NVIC_SystemReset();
 }
-
-//    HAL_GPIO_TogglePin(LED_FAULT_GPIO_Port, LED_FAULT_Pin);
-//	  HAL_GPIO_TogglePin(LED_STATUS_GPIO_Port, LED_STATUS_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO0_GPIO_Port, RFD_GPIO0_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO1_GPIO_Port, RFD_GPIO1_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO2_GPIO_Port, RFD_GPIO2_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO3_GPIO_Port, RFD_GPIO3_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO4_GPIO_Port, RFD_GPIO4_Pin);
-//    HAL_GPIO_TogglePin(RFD_GPIO5_GPIO_Port, RFD_GPIO5_Pin);
-
-//    HAL_UART_Transmit(&huart1, (uint8_t*)"demo", 4, HAL_MAX_DELAY);
-
-//    packetsLogged_ul.data += 1;
-//    send_parameter((CAN_INFO_STRUCT*)&packetsLogged_ul);
-
-//    HAL_ADC_Start(&hadc1);
-//    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-//    uint32_t raw = HAL_ADC_GetValue(&hadc1);
-//    printf("ADC: %ld\n", raw);
-//    HAL_ADC_Stop(&hadc1);
