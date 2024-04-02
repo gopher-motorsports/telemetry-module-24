@@ -8,7 +8,6 @@
 #ifndef INC_TM_H_
 #define INC_TM_H_
 
-#define TM_DEBUG
 #define TM_RTC_MAGIC 0x24 // used to check if backup register has been cleared
 
 #define TM_DELAY_HEARTBEAT 1000
@@ -16,6 +15,8 @@
 #define TM_DELAY_COLLECT_DATA 1000
 #define TM_DELAY_STORE_DATA 1000
 #define TM_DELAY_TRANSMIT_DATA 1000
+
+//#define TM_DEBUG_CAN_LOOPBACK
 
 typedef enum {
     TM_OK     = 0,

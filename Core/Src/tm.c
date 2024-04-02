@@ -23,7 +23,7 @@ extern RTC_HandleTypeDef hrtc;
 void tm_init() {
 	printf("Go4-24 Telemetry Module\n");
 
-#ifdef TM_DEBUG
+#ifdef TM_DEBUG_CAN_LOOPBACK
 	// put CAN in loopback mode
 	hcan1.Init.Mode = CAN_MODE_LOOPBACK;
 	if (HAL_CAN_Init(&hcan1))
@@ -74,29 +74,29 @@ void tm_collect_data() {
 }
 
 void tm_store_data() {
-//	static bool sd_ready = 0;
-//	if (!sd_ready) {
-//		if (tm_sd_init() != TM_OK)
-//			tm_sd_deinit();
-//		else
-//			sd_ready = 1;
-//	}
-//
-//	if (sd_ready) {
-//		if (tm_sd_write((uint8_t*)"test", 4) != TM_OK) {
-//			sd_ready = 0;
-//			tm_sd_deinit();
-//		}
-//	}
+	static bool sd_ready = 0;
+	if (!sd_ready) {
+		if (tm_sd_init() != TM_OK)
+			tm_sd_deinit();
+		else
+			sd_ready = 1;
+	}
+
+	if (sd_ready) {
+		if (tm_sd_write((uint8_t*)"test", 4) != TM_OK) {
+			sd_ready = 0;
+			tm_sd_deinit();
+		}
+	}
 
 	osDelay(TM_DELAY_STORE_DATA);
 }
 
 void tm_transmit_data() {
-	HAL_UART_Transmit(&huart1, (uint8_t*)"test", 4, HAL_MAX_DELAY);
+//	HAL_UART_Transmit(&huart1, (uint8_t*)"test", 4, HAL_MAX_DELAY);
 
-//	packetsLogged_ul.data += 1;
-//	send_parameter(PACKETSLOGGED_UL_ID);
+	packetsLogged_ul.data += 1;
+	send_parameter(PACKETSLOGGED_UL_ID);
 
 	osDelay(TM_DELAY_TRANSMIT_DATA);
 }
