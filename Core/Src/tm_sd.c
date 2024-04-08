@@ -2,7 +2,7 @@
  * tm_sd.c
  *
  *  Created on: Dec 7, 2023
- *      Author: jonol
+ *      Author: jonathan
  */
 
 #include <stdbool.h>

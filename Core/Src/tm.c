@@ -2,7 +2,7 @@
  * tm.c
  *
  *  Created on: Dec 2, 2023
- *      Author: jonol
+ *      Author: jonathan
  */
 
 #include <stdbool.h>
@@ -13,12 +13,16 @@
 #include "tm_sd.h"
 #include "GopherCAN.h"
 #include "GopherCAN_network.h"
+#include "tm_data.h"
 
 extern UART_HandleTypeDef huart1;
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern ADC_HandleTypeDef hadc1;
 extern RTC_HandleTypeDef hrtc;
+
+extern TM_DBL_BUFFER SD_DB;
+extern TM_DBL_BUFFER RADIO_DB;
 
 void tm_init() {
 	printf("Go4-24 Telemetry Module\n");
@@ -95,8 +99,8 @@ void tm_store_data() {
 void tm_transmit_data() {
 //	HAL_UART_Transmit(&huart1, (uint8_t*)"test", 4, HAL_MAX_DELAY);
 
-	packetsLogged_ul.data += 1;
-	send_parameter(PACKETSLOGGED_UL_ID);
+//	packetsLogged_ul.data += 1;
+//	send_parameter(PACKETSLOGGED_UL_ID);
 
 	osDelay(TM_DELAY_TRANSMIT_DATA);
 }

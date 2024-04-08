@@ -2,7 +2,7 @@
  * tm.h
  *
  *  Created on: Dec 2, 2023
- *      Author: jonol
+ *      Author: jonathan
  */
 
 #ifndef INC_TM_H_

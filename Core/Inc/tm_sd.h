@@ -2,7 +2,7 @@
  * tm_sd.h
  *
  *  Created on: Dec 7, 2023
- *      Author: jonol
+ *      Author: jonathan
  */
 
 #ifndef INC_TM_SD_H_
