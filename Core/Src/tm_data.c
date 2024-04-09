@@ -51,9 +51,7 @@ TM_DBL_BUFFER RADIO_DB = {
 
 static void append_byte(TM_BUFFER* buffer, uint8_t byte);
 
-TM_RES tm_data_record(TM_BUFFER* buffer, GCAN_PARAM_ID pid) {
-	CAN_INFO_STRUCT* param = PARAMETERS[pid];
-
+TM_RES tm_data_record(TM_BUFFER* buffer, CAN_INFO_STRUCT* param) {
     uint32_t timestamp = param->last_rx;
     uint16_t id = param->ID;
     void* data = NULL;

@@ -74,6 +74,35 @@ void tm_collect_data() {
 //	printf("ADC: %ld\n", raw);
 //	HAL_ADC_Stop(&hadc1);
 
+	static uint32_t sd_last_log[NUM_OF_PARAMETERS] = {0};
+	static uint32_t radio_last_tx[NUM_OF_PARAMETERS] = {0};
+
+#ifdef TM_DEBUG_SIMULATE_DATA
+	send_parameter(ENGINERPM_RPM_ID);
+#endif
+
+	for (uint8_t i = 1; i < NUM_OF_PARAMETERS; i++) {
+		CAN_INFO_STRUCT* param = PARAMETERS[i];
+		uint32_t tick = HAL_GetTick();
+
+		if (param->last_rx > sd_last_log[i]) {
+			// parameter has been updated
+			// create packet and add to SD buffer
+			TM_RES res = tm_data_record(SD_DB.buffers[SD_DB.write_index], param);
+			if (res == TM_OK) {
+				sd_last_log[i] = tick;
+			}
+		}
+
+		if (param->last_rx > radio_last_tx[i] && (tick - radio_last_tx[i]) > TM_RADIO_TX_DELAY) {
+			// parameter has been updated and hasn't been sent in a while
+			TM_RES res = tm_data_record(RADIO_DB.buffers[RADIO_DB.write_index], param);
+			if (res == TM_OK) {
+				radio_last_tx[i] = tick;
+			}
+		}
+	}
+
 	osDelay(TM_DELAY_COLLECT_DATA);
 }
 
@@ -86,23 +115,65 @@ void tm_store_data() {
 			sd_ready = 1;
 	}
 
-	if (sd_ready) {
-		if (tm_sd_write((uint8_t*)"test", 4) != TM_OK) {
-			sd_ready = 0;
-			tm_sd_deinit();
+	if (sd_ready && !SD_DB.tx_cplt) {
+		// FatFs initialized, waiting for a transfer
+		TM_BUFFER* buffer = SD_DB.buffers[!SD_DB.write_index];
+		if (buffer->fill > 0) {
+			if (tm_sd_write(buffer->bytes, buffer->fill) != TM_OK) {
+				// write failed
+				sd_ready = 0;
+				tm_sd_deinit();
+			} else {
+				// successful write
+				SD_DB.tx_cplt = 1;
+			}
+		} else {
+			// nothing to transfer
+			SD_DB.tx_cplt = 1;
 		}
+	}
+
+	// swap buffers after transfer is complete
+	// critical section entry/exit is fast and fine for a quick swap
+	if (SD_DB.tx_cplt) {
+		taskENTER_CRITICAL();
+		SD_DB.write_index = !SD_DB.write_index;
+		SD_DB.buffers[SD_DB.write_index]->fill = 0;
+		SD_DB.tx_cplt = 0;
+		taskEXIT_CRITICAL();
 	}
 
 	osDelay(TM_DELAY_STORE_DATA);
 }
 
 void tm_transmit_data() {
-//	HAL_UART_Transmit(&huart1, (uint8_t*)"test", 4, HAL_MAX_DELAY);
+	if (!RADIO_DB.tx_cplt) {
+		// waiting for a transfer to radio
+		TM_BUFFER* buffer = RADIO_DB.buffers[!RADIO_DB.write_index];
+		if (buffer->fill > 0) {
+			HAL_UART_Transmit_DMA(&huart1, buffer->bytes, buffer->size);
+		} else {
+			// nothing to transfer
+			RADIO_DB.tx_cplt = 1;
+		}
+	}
 
-//	packetsLogged_ul.data += 1;
-//	send_parameter(PACKETSLOGGED_UL_ID);
+	// swap buffers after transfer is complete
+	// critical section entry/exit is fast and fine for a quick swap
+	if (RADIO_DB.tx_cplt) {
+		taskENTER_CRITICAL();
+		RADIO_DB.write_index = !RADIO_DB.write_index;
+		RADIO_DB.buffers[RADIO_DB.write_index]->fill = 0;
+		RADIO_DB.tx_cplt = 0;
+		taskEXIT_CRITICAL();
+	}
 
 	osDelay(TM_DELAY_TRANSMIT_DATA);
+}
+
+// triggered when UART DMA transfer is complete
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
+    RADIO_DB.tx_cplt = 1;
 }
 
 void tm_fault() {

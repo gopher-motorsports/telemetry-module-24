@@ -17,8 +17,8 @@
 #define ESCAPE_BYTE 0x7d // next byte is escaped
 #define ESCAPE_XOR 0x20 // escape code
 
-#define TM_SD_BUFFER_SIZE 64000
-#define TM_RADIO_BUFFER_SIZE 64000
+#define TM_SD_BUFFER_SIZE 10000
+#define TM_RADIO_BUFFER_SIZE 10000
 
 typedef struct {
     uint8_t* bytes;
@@ -32,6 +32,6 @@ typedef struct {
     bool tx_cplt; // flag set when transfer of read buffer is complete
 } TM_DBL_BUFFER;
 
-TM_RES tm_data_record(TM_BUFFER* buffer, GCAN_PARAM_ID pid);
+TM_RES tm_data_record(TM_BUFFER* buffer, CAN_INFO_STRUCT* param);
 
 #endif /* INC_TM_DATA_H_ */
