@@ -78,7 +78,7 @@ void tm_collect_data() {
 	static uint32_t radio_last_tx[NUM_OF_PARAMETERS] = {0};
 
 #ifdef TM_DEBUG_SIMULATE_DATA
-	send_parameter(ENGINERPM_RPM_ID);
+	send_parameter(1);
 #endif
 
 	for (uint8_t i = 1; i < NUM_OF_PARAMETERS; i++) {
@@ -151,7 +151,7 @@ void tm_transmit_data() {
 		// waiting for a transfer to radio
 		TM_BUFFER* buffer = RADIO_DB.buffers[!RADIO_DB.write_index];
 		if (buffer->fill > 0) {
-			HAL_UART_Transmit_DMA(&huart1, buffer->bytes, buffer->size);
+			HAL_UART_Transmit_DMA(&huart1, buffer->bytes, buffer->fill);
 		} else {
 			// nothing to transfer
 			RADIO_DB.tx_cplt = 1;
