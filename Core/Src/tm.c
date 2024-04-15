@@ -56,6 +56,10 @@ void tm_heartbeat() {
 	HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
 	printf("20%u-%02u-%02u-%02u-%02u-%02u\n", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
 
+#ifdef TM_DEBUG_SIMULATE_DATA
+	send_parameter(1);
+#endif
+
 	osDelay(TM_DELAY_HEARTBEAT);
 }
 
@@ -77,10 +81,6 @@ void tm_collect_data() {
 	static uint32_t sd_last_log[NUM_OF_PARAMETERS] = {0};
 	static uint32_t radio_last_tx[NUM_OF_PARAMETERS] = {0};
 
-#ifdef TM_DEBUG_SIMULATE_DATA
-	send_parameter(1);
-#endif
-
 	for (uint8_t i = 1; i < NUM_OF_PARAMETERS; i++) {
 		CAN_INFO_STRUCT* param = PARAMETERS[i];
 		uint32_t tick = HAL_GetTick();
@@ -96,6 +96,7 @@ void tm_collect_data() {
 
 		if (param->last_rx > radio_last_tx[i] && (tick - radio_last_tx[i]) > TM_RADIO_TX_DELAY) {
 			// parameter has been updated and hasn't been sent in a while
+			// create packet and add to radio buffer
 			TM_RES res = tm_data_record(RADIO_DB.buffers[RADIO_DB.write_index], param);
 			if (res == TM_OK) {
 				radio_last_tx[i] = tick;
@@ -147,11 +148,14 @@ void tm_store_data() {
 }
 
 void tm_transmit_data() {
-	if (!RADIO_DB.tx_cplt) {
+	static bool tx_in_progress = false;
+
+	if (!RADIO_DB.tx_cplt && !tx_in_progress) {
 		// waiting for a transfer to radio
 		TM_BUFFER* buffer = RADIO_DB.buffers[!RADIO_DB.write_index];
 		if (buffer->fill > 0) {
 			HAL_UART_Transmit_DMA(&huart1, buffer->bytes, buffer->fill);
+			tx_in_progress = true;
 		} else {
 			// nothing to transfer
 			RADIO_DB.tx_cplt = 1;
@@ -165,6 +169,7 @@ void tm_transmit_data() {
 		RADIO_DB.write_index = !RADIO_DB.write_index;
 		RADIO_DB.buffers[RADIO_DB.write_index]->fill = 0;
 		RADIO_DB.tx_cplt = 0;
+		tx_in_progress = false;
 		taskEXIT_CRITICAL();
 	}
 
