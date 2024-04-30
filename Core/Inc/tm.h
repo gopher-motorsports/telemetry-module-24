@@ -15,7 +15,7 @@
 #define TM_DELAY_TRANSMIT_DATA 100
 
 //#define TM_DEBUG_CAN_LOOPBACK
-#define TM_DEBUG_SIMULATE_DATA
+//#define TM_DEBUG_SIMULATE_DATA
 
 #define TM_RTC_MAGIC 0x24 // used to check if backup register has been cleared
 #define TM_RADIO_TX_DELAY 100 // minimum time (ms) until param can be sent again

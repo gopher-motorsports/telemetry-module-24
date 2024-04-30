@@ -32,7 +32,7 @@ TM_RES tm_sd_init() {
 	char filename[] = "YYYY-MM-DD-hh-mm-ss.gdat";
 	sprintf(filename, "20%u-%02u-%02u-%02u-%02u-%02u.gdat", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
 
-    if (f_open(&SDFile, filename, FA_OPEN_APPEND | FA_WRITE) != FR_OK)
+    if (f_open(&SDFile, filename, FA_WRITE | FA_CREATE_NEW) != FR_OK)
         return TM_ERR;
 
     printf("opened: %s\n", filename);
