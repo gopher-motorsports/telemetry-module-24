@@ -28,6 +28,10 @@ extern TM_DBL_BUFFER RADIO_DB;
 #define ADC_VBAT_BUF_SIZE 128
 uint16_t ADC_VBAT_BUF[ADC_VBAT_BUF_SIZE];
 
+// CAN RX interrupt counters
+uint32_t hcan1_rx_count = 0;
+uint32_t hcan2_rx_count = 0;
+
 void tm_init() {
 	printf("Go4-24 Telemetry Module\n");
 
@@ -55,6 +59,8 @@ void tm_init() {
 
 void tm_heartbeat() {
 	uint32_t tick = HAL_GetTick();
+	static uint32_t last_can_calc = 0;
+
 	HAL_GPIO_TogglePin(LED_HEARTBEAT_GPIO_Port, LED_HEARTBEAT_Pin);
 
 	// print time stamp
@@ -82,6 +88,18 @@ void tm_heartbeat() {
 	tm_CoinBattery_V.info.last_rx = tick;
 
 	// estimate CAN utilization
+	// assumes 1Mbps bus
+	// assumes each frame is 44 + 8N (data bytes) + 3 (inter-frame) = 111 bits
+	// assumes every frame has 8 bytes of data (worst case)
+	// ignores bit stuffing
+	float sec_since_last_update = (HAL_GetTick() - last_can_calc) / 1000.0f;
+	float hcan1_util = hcan1_rx_count * 111.0f / sec_since_last_update / 1e6;
+	float hcan2_util = hcan2_rx_count * 111.0f / sec_since_last_update / 1e6;
+	tm_CAN1Util_percent.data = hcan1_util * 100.0f;
+	tm_CAN2Util_percent.data = hcan2_util * 100.0f;
+	tm_CAN1Util_percent.info.last_rx = tick;
+	tm_CAN2Util_percent.info.last_rx = tick;
+	last_can_calc = HAL_GetTick();
 
 #ifdef TM_DEBUG_SIMULATE_DATA
 	for (uint8_t i = 1; i < NUM_OF_PARAMETERS; i++) {
@@ -98,6 +116,11 @@ void tm_service_can() {
     service_can_rx_buffer();
 
     osDelay(TM_DELAY_SERVICE_CAN);
+}
+
+void GCAN_onRX(CAN_HandleTypeDef* hcan) {
+	if (hcan->Instance == CAN1) hcan1_rx_count++;
+	else if (hcan->Instance == CAN2) hcan2_rx_count++;
 }
 
 void tm_collect_data() {
