@@ -48,16 +48,37 @@ void tm_init() {
 }
 
 void tm_heartbeat() {
+	uint32_t tick = HAL_GetTick();
 	HAL_GPIO_TogglePin(LED_HEARTBEAT_GPIO_Port, LED_HEARTBEAT_Pin);
 
+	// print time stamp
 	RTC_TimeTypeDef time;
 	RTC_DateTypeDef date;
 	HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
 	HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
 	printf("20%u-%02u-%02u-%02u-%02u-%02u\n", date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds);
 
+	// update logging metrics
+	tm_SDBufferFill_percent.info.last_rx = tick;
+	tm_RadioBufferFill_percent.info.last_rx = tick;
+	tm_SDBytesTransferred_bytes.info.last_rx = tick;
+	tm_RadioBytesTransferred_bytes.info.last_rx = tick;
+	tm_SDPacketsDropped_ul.info.last_rx = tick;
+	tm_RadioPacketsDropped_ul.info.last_rx = tick;
+
+	// measure coin cell battery voltage
+	//	HAL_ADC_Start(&hadc1);
+	//	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+	//	uint32_t raw = HAL_ADC_GetValue(&hadc1);
+	//	printf("ADC: %ld\n", raw);
+	//	HAL_ADC_Stop(&hadc1);
+
+	// estimate CAN utilization
+
 #ifdef TM_DEBUG_SIMULATE_DATA
-	send_parameter(1);
+	for (uint8_t i = 1; i < NUM_OF_PARAMETERS; i++) {
+		send_parameter(i);
+	}
 #endif
 
 	osDelay(TM_DELAY_HEARTBEAT);
@@ -72,12 +93,6 @@ void tm_service_can() {
 }
 
 void tm_collect_data() {
-//	HAL_ADC_Start(&hadc1);
-//	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-//	uint32_t raw = HAL_ADC_GetValue(&hadc1);
-//	printf("ADC: %ld\n", raw);
-//	HAL_ADC_Stop(&hadc1);
-
 	static uint32_t sd_last_log[NUM_OF_PARAMETERS] = {0};
 	static uint32_t radio_last_tx[NUM_OF_PARAMETERS] = {0};
 
@@ -91,6 +106,8 @@ void tm_collect_data() {
 			TM_RES res = tm_data_record(SD_DB.buffers[SD_DB.write_index], param);
 			if (res == TM_OK) {
 				sd_last_log[i] = tick;
+			} else {
+				tm_SDPacketsDropped_ul.data += 1;
 			}
 		}
 
@@ -100,9 +117,14 @@ void tm_collect_data() {
 			TM_RES res = tm_data_record(RADIO_DB.buffers[RADIO_DB.write_index], param);
 			if (res == TM_OK) {
 				radio_last_tx[i] = tick;
+			} else {
+				tm_RadioPacketsDropped_ul.data += 1;
 			}
 		}
 	}
+
+	tm_SDBufferFill_percent.data = (float) SD_DB.buffers[SD_DB.write_index]->fill / SD_DB.buffers[SD_DB.write_index]->size * 100.0f;
+	tm_RadioBufferFill_percent.data = (float) RADIO_DB.buffers[RADIO_DB.write_index]->fill / RADIO_DB.buffers[RADIO_DB.write_index]->size * 100.0f;
 
 	osDelay(TM_DELAY_COLLECT_DATA);
 }
@@ -138,8 +160,9 @@ void tm_store_data() {
 	// critical section entry/exit is fast and fine for a quick swap
 	if (SD_DB.tx_cplt) {
 		taskENTER_CRITICAL();
+		tm_SDBytesTransferred_bytes.data += SD_DB.buffers[!SD_DB.write_index]->fill;
+		SD_DB.buffers[!SD_DB.write_index]->fill = 0;
 		SD_DB.write_index = !SD_DB.write_index;
-		SD_DB.buffers[SD_DB.write_index]->fill = 0;
 		SD_DB.tx_cplt = 0;
 		taskEXIT_CRITICAL();
 	}
@@ -166,8 +189,9 @@ void tm_transmit_data() {
 	// critical section entry/exit is fast and fine for a quick swap
 	if (RADIO_DB.tx_cplt) {
 		taskENTER_CRITICAL();
+		tm_RadioBytesTransferred_bytes.data += RADIO_DB.buffers[!RADIO_DB.write_index]->fill;
+		RADIO_DB.buffers[!RADIO_DB.write_index]->fill = 0;
 		RADIO_DB.write_index = !RADIO_DB.write_index;
-		RADIO_DB.buffers[RADIO_DB.write_index]->fill = 0;
 		RADIO_DB.tx_cplt = 0;
 		tx_in_progress = false;
 		taskEXIT_CRITICAL();
