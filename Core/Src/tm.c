@@ -24,6 +24,10 @@ extern RTC_HandleTypeDef hrtc;
 extern TM_DBL_BUFFER SD_DB;
 extern TM_DBL_BUFFER RADIO_DB;
 
+// buffer for ADC_VBAT samples (coin cell battery)
+#define ADC_VBAT_BUF_SIZE 128
+uint16_t ADC_VBAT_BUF[ADC_VBAT_BUF_SIZE];
+
 void tm_init() {
 	printf("Go4-24 Telemetry Module\n");
 
@@ -43,6 +47,8 @@ void tm_init() {
 
 	if (init_can(&hcan2, GCAN1))
 		tm_fault();
+
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ADC_VBAT_BUF, ADC_VBAT_BUF_SIZE);
 
 	printf("initialization complete\n");
 }
@@ -66,12 +72,14 @@ void tm_heartbeat() {
 	tm_SDPacketsDropped_ul.info.last_rx = tick;
 	tm_RadioPacketsDropped_ul.info.last_rx = tick;
 
-	// measure coin cell battery voltage
-	//	HAL_ADC_Start(&hadc1);
-	//	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-	//	uint32_t raw = HAL_ADC_GetValue(&hadc1);
-	//	printf("ADC: %ld\n", raw);
-	//	HAL_ADC_Stop(&hadc1);
+	// average coin cell voltage samples
+	uint32_t adc_total = 0;
+	for (size_t i = 0; i < ADC_VBAT_BUF_SIZE; i++) {
+		adc_total += ADC_VBAT_BUF[i];
+	}
+	float adc_avg = (float) adc_total / ADC_VBAT_BUF_SIZE;
+	tm_CoinBattery_V.data = adc_avg / 4096.0f * 3.3f;
+	tm_CoinBattery_V.info.last_rx = tick;
 
 	// estimate CAN utilization
 
